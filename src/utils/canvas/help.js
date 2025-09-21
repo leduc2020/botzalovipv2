@@ -1,14 +1,15 @@
 import { createCanvas, loadImage } from "canvas";
 import fs from "fs";
 import path from "path";
-import * as cv from "./index.js";
+import axios from "axios";
+import * as cv from "./index.js"; // nếu đang trong index.js thì bỏ dòng này đi
 
 // Tạo Hình Lệnh !Help
 export async function createInstructionsImage(helpContent, isAdminBox, width = 800) {
   const ctxTemp = createCanvas(999, 999).getContext("2d");
 
   const space = 36;
-  let yTemp = 60; 
+  let yTemp = 60;
 
   ctxTemp.font = "bold 28px Tahoma";
   for (const key in helpContent.allMembers) {
@@ -24,7 +25,7 @@ export async function createInstructionsImage(helpContent, isAdminBox, width = 8
     }
   }
 
-  yTemp += 60; // Khoảng Cách Dưới
+  yTemp += 60;
 
   if (isAdminBox) {
     for (const key in helpContent.admin) {
@@ -39,19 +40,28 @@ export async function createInstructionsImage(helpContent, isAdminBox, width = 8
         yTemp += 52;
       }
     }
-    yTemp += 60; // Khoảng Cách Dưới
+    yTemp += 60;
   }
 
   const height = yTemp > 430 ? yTemp : 430;
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext("2d");
 
-  // Áp dụng nền động và gradient
-  const backgroundGradient = ctx.createLinearGradient(0, 0, 0, height);
-  backgroundGradient.addColorStop(0, "#3B82F6");
-  backgroundGradient.addColorStop(1, "#111827");
-  ctx.fillStyle = backgroundGradient;
-  ctx.fillRect(0, 0, width, height);
+  // ======== NỀN MỚI: Load ảnh từ URL ========
+  try {
+    const imageUrl = "https://files.catbox.moe/1xvnoi.png";
+    const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
+    const background = await loadImage(Buffer.from(response.data, "binary"));
+    ctx.drawImage(background, 0, 0, width, height);
+  } catch (err) {
+    // fallback: gradient nếu lỗi tải ảnh
+    const backgroundGradient = ctx.createLinearGradient(0, 0, 0, height);
+    backgroundGradient.addColorStop(0, "#0A0A0A");
+    backgroundGradient.addColorStop(1, "#121212");
+    ctx.fillStyle = backgroundGradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+  // ==========================================
 
   let y = 60;
 
